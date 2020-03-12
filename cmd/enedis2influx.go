@@ -127,17 +127,6 @@ func main() {
 			"heures_pleines":  pleines,
 			"heures_normales": normales,
 		}
-		fields := map[string]interface{}{
-			"value": measure.Power * 1000,
-			"max":   conf.Enedis.MaxPower * 1000,
-		}
-
-		pt, err := influx.NewPoint(conf.Influx.Measure, tags, fields, measure.Date)
-		if err != nil {
-			fmt.Println("Error: ", err.Error())
-		}
-
-		bp.AddPoint(pt)
 
 		// Compute price
 		var priceToPay float64
@@ -155,6 +144,18 @@ func main() {
 
 		totalPrice += priceToPay
 		totalKwh += measure.Power
+
+		fields := map[string]interface{}{
+			"power": measure.Power * 1000,
+			"price": priceToPay,
+		}
+
+		pt, err := influx.NewPoint(conf.Influx.Measure, tags, fields, measure.Date)
+		if err != nil {
+			fmt.Println("Error: ", err.Error())
+		}
+
+		bp.AddPoint(pt)
 
 		log.Printf("Got measure of %s : %.3f | HC:%s | HP:%s | HN:%s | PRICE:%.4f", measure.Date.Format(time.RFC3339), measure.Power, creuses, pleines, normales, priceToPay)
 
